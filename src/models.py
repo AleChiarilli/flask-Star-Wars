@@ -73,6 +73,7 @@ class FavoriteCharacters(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     character_id = db.Column(db.Integer, db.ForeignKey('characters.id'))
 
+    # aquí las funciones para representarlo y serializarlo
     def __repr__(self):
         return '<FavoriteCharacters %r>' % self.character_id
     
