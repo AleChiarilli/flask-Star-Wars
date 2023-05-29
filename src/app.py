@@ -1,6 +1,7 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
+import json
 import os
 from flask import Flask, request, jsonify, url_for
 from flask_migrate import Migrate
@@ -36,14 +37,89 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
+# @app.route('/user', methods=['GET'])
+# def handle_hello():
+
+#     response_body = {
+#         "msg": "Hello, this is your GET /user response "
+#     }
+
+#     return jsonify(response_body), 200
+
+
+        # éstos son mis endpoints
+        # 1. éste es el endpoint para recibir la info de todos los usuarios
 @app.route('/user', methods=['GET'])
 def handle_hello():
 
+    results = User.query.all()
+    users_list = list(map(lambda item: item.serialize(),results))
+
+
     response_body = {
-        "msg": "Hello, this is your GET /user response "
+        "msg": "Hello, this is your GET /user response ",
+        "results": users_list
     }
 
     return jsonify(response_body), 200
+
+         #2. éste es el endpoint para consultar UN dato o usuario en la tabla
+@app.route('/user/<int:id>', methods=['GET'])
+def get_user(id):
+    print(id)
+
+    user = User.query.filter_by(id=id).first()
+    print(user.serialize())
+    # results = User.query.all()
+    # users_list = list(map(lambda item: item.serialize(),results))
+
+
+    response_body = {
+        "msg": "Hello, this is your GET /user response ",
+        "result": user.serialize()
+    }
+
+    return jsonify(response_body), 200
+
+
+         #3. éste es el endpoint para crear un dato o usuario en la tabla
+@app.route('/user', methods=['POST'])
+def create_user():
+
+    body = json.loads(request.data)
+    # json.loads(request.body.decode(encoding='UTF-8'))
+    print(body)
+    # esta linea busca el is active y lo pondra por defecto en True
+    is_active = request.json.get("is_active", True)
+    user = User(email=body["email"], password=body["password"], is_active=is_active)
+    # session es una palabra reservada de SQL-Alchemy
+    db.session.add(user)
+    db.session.commit()
+
+    response_body = {
+        "msg": "El usuario ha sido creado",
+    }
+
+    return jsonify(response_body), 200
+
+    #4. éste es el endpoint para borrar un usuario en la tabla
+@app.route('/api/users/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    print(id)
+
+    # el filter_by te identifica el usuario
+    user = User.query.filter_by(id=id).first()
+    print(user.serialize())
+    # session es una palabra reservada de SQL-Alchemy
+    db.session.delete(user)
+    db.session.commit()
+
+    response_body = {
+        "msg": "El usuario ha sido borrado",
+    }
+    return jsonify(response_body), 200
+
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
